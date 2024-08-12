@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      body { font-family: Arial, sans-serif; }
+      table { border-collapse: collapse; width: 100%; }
+      th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+      th { background-color: #f2f2f2; }
+      .form-container { display: none; margin-top: 20px; }
+    </style>
+  </head>
+  <body>
+    <h1>Manajemen Karyawan</h1>
+    
+    <h2>Tambah Karyawan Baru</h2>
+    <form id="addForm">
+      Nama: <input type="text" name="nama" required><br>
+      Posisi: <input type="text" name="posisi" required><br>
+      Status: <input type="text" name="status" required><br>
+      No Telepon: <input type="text" name="noTelepon" required><br>
+      <input type="submit" value="Tambah">
+    </form>
+    
+    <h2>Daftar Karyawan</h2>
+    <div id="dataContainer"></div>
+    
+    <div id="editFormContainer" class="form-container">
+      <h2>Edit Karyawan</h2>
+      <form id="editForm">
+        <input type="hidden" name="id">
+        Nama: <input type="text" name="nama" required><br>
+        Posisi: <input type="text" name="posisi" required><br>
+        Status: <input type="text" name="status" required><br>
+        No Telepon: <input type="text" name="noTelepon" required><br>
+        <input type="submit" value="Simpan Perubahan">
+        <button type="button" onclick="cancelEdit()">Batal</button>
+      </form>
+    </div>
+    
+    <script>
+      // Fungsi untuk memuat data
+      function loadData() {
+        google.script.run.withSuccessHandler(displayData).getData();
+      }
+      
+      // Fungsi untuk menampilkan data
+      function displayData(data) {
+        var html = '<table><tr><th>ID</th><th>Nama</th><th>Posisi</th><th>Status</th><th>No Telepon</th><th>Aksi</th></tr>';
+        for (var i = 0; i < data.length; i++) {
+          html += '<tr>';
+          for (var j = 0; j < data[i].length; j++) {
+            html += '<td>' + data[i][j] + '</td>';
+          }
+          html += '<td><button onclick="editData(' + data[i][0] + ')">Edit</button> <button onclick="deleteData(' + data[i][0] + ')">Hapus</button></td>';
+          html += '</tr>';
+        }
+        html += '</table>';
+        document.getElementById('dataContainer').innerHTML = html;
+      }
+      
+      // Fungsi untuk menambah data
+      document.getElementById('addForm').onsubmit = function(e) {
+        e.preventDefault();
+        var form = this;
+        google.script.run.withSuccessHandler(function() {
+          form.reset();
+          loadData();
+        }).addData(form.nama.value, form.posisi.value, form.status.value, form.noTelepon.value);
+      };
+      
+      // Fungsi untuk menghapus data
+      function deleteData(id) {
+        if (confirm('Anda yakin ingin menghapus data ini?')) {
+          google.script.run.withSuccessHandler(loadData).deleteData(id);
+        }
+      }
+      
+      // Fungsi untuk memulai proses edit
+      function editData(id) {
+        var data = document.querySelectorAll('table tr');
+        for (var i = 1; i < data.length; i++) {
+          if (data[i].cells[0].textContent == id) {
+            var form = document.getElementById('editForm');
+            form.id.value = id;
+            form.nama.value = data[i].cells[1].textContent;
+            form.posisi.value = data[i].cells[2].textContent;
+            form.status.value = data[i].cells[3].textContent;
+            form.noTelepon.value = data[i].cells[4].textContent;
+            document.getElementById('editFormContainer').style.display = 'block';
+            break;
+          }
+        }
+      }
+      
+      // Fungsi untuk menyimpan perubahan edit
+      document.getElementById('editForm').onsubmit = function(e) {
+        e.preventDefault();
+        var form = this;
+        google.script.run.withSuccessHandler(function() {
+          form.reset();
+          document.getElementById('editFormContainer').style.display = 'none';
+          loadData();
+        }).updateData(form.id.value, form.nama.value, form.posisi.value, form.status.value, form.noTelepon.value);
+      };
+      
+      // Fungsi untuk membatalkan edit
+      function cancelEdit() {
+        document.getElementById('editForm').reset();
+        document.getElementById('editFormContainer').style.display = 'none';
+      }
+      
+      // Memuat data saat halaman dimuat
+      loadData();
+    </script>
+  </body>
+</html>
